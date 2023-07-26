@@ -19,8 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "usart.h"
-
 /* USER CODE BEGIN 0 */
+#include "cmsis_os2.h"
 #include "freertosUtils.h"
 
 #define MAX_BUFFER_SIZE 64
@@ -212,6 +212,9 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 	uint16_t bytesReceived = huart->RxXferSize - huart->RxXferCount;
 	uint8_t* bufferPointer;
 	osMessageQueueId_t queueHandler;
+	osStatus_t operationStatus = osOK;
+	HAL_StatusTypeDef uartOperationStatus = HAL_OK;
+
 	if (huart == &huart1)
 	{
 		bufferPointer = uart1RecievedBuffer;
@@ -223,12 +226,21 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 		bufferPointer = uart2RecievedBuffer;
 	}
 
-	HAL_UART_Receive_IT(huart, uart1RecievedBuffer, bytesReceived);
+	uartOperationStatus = HAL_UART_Receive_IT(huart, uart1RecievedBuffer, bytesReceived);
 
-	for (int i = 0; i < bytesRecieved; i++)
+	if (!uartOpeartionStatus)
 	{
-		osMessageQueuePut(queueHandler, *(bufferPointer + i), 0, osWaitForever);
+		for (int i = 0; i < bytesReceived; i++)
+		{
+			operationStatus = osMessageQueuePut(queueHandler, (void*)(bufferPointer + i), 0, 0);
+		}
 	}
+
+	if (!operationStatus)
+	{
+		printf("Queue fail with code %d", operationStatus); //TODO: This code should be replaced by real Queue error process
+	}
+
 
 }
 /* USER CODE END 1 */
