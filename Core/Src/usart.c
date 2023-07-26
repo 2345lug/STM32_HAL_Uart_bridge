@@ -21,6 +21,8 @@
 #include "usart.h"
 
 /* USER CODE BEGIN 0 */
+#include "freertosUtils.h"
+
 #define MAX_BUFFER_SIZE 64
 
 static uint8_t uart1RecievedBuffer[MAX_BUFFER_SIZE] = {0};
@@ -195,17 +197,38 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* uartHandle)
 }
 
 /* USER CODE BEGIN 1 */
+
+/**
+ * @brief UART interrupt callback
+ *
+ * This function is intended solely for showcasing various RTOS synchronization
+ * mechanisms. I realize that so long interruption will be negative for perfomance.
+ * And using "for" into interrupt maybe terrible
+ *
+ * @param[in] huart Called uart pointer.
+ */
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
 	uint16_t bytesReceived = huart->RxXferSize - huart->RxXferCount;
-
+	uint8_t* bufferPointer;
+	osMessageQueueId_t queueHandler;
 	if (huart == &huart1)
 	{
-		HAL_UART_Receive_IT(huart, uart1RecievedBuffer, bytesReceived);
+		bufferPointer = uart1RecievedBuffer;
+		queueHandler = getUart1RecievedQueueHandle();
 	}
 	else if (huart == &huart2)
 	{
-		HAL_UART_Receive_IT(huart, uart2RecievedBuffer, bytesReceived);
+		queueHandler = getUart2RecievedQueueHandle();
+		bufferPointer = uart2RecievedBuffer;
 	}
+
+	HAL_UART_Receive_IT(huart, uart1RecievedBuffer, bytesReceived);
+
+	for (int i = 0; i < bytesRecieved; i++)
+	{
+		osMessageQueuePut(queueHandler, *(bufferPointer + i), 0, osWaitForever);
+	}
+
 }
 /* USER CODE END 1 */
