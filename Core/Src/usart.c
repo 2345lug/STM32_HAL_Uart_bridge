@@ -21,7 +21,10 @@
 #include "usart.h"
 
 /* USER CODE BEGIN 0 */
+#define MAX_BUFFER_SIZE 64
 
+static uint8_t uart1RecievedBuffer[MAX_BUFFER_SIZE] = {0};
+static uint8_t uart2RecievedBuffer[MAX_BUFFER_SIZE] = {0};
 /* USER CODE END 0 */
 
 UART_HandleTypeDef huart1;
@@ -192,5 +195,17 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* uartHandle)
 }
 
 /* USER CODE BEGIN 1 */
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+	uint16_t bytesReceived = huart->RxXferSize - huart->RxXferCount;
 
+	if (huart == &huart1)
+	{
+		HAL_UART_Receive_IT(huart, uart1RecievedBuffer, bytesReceived);
+	}
+	else if (huart == &huart2)
+	{
+		HAL_UART_Receive_IT(huart, uart2RecievedBuffer, bytesReceived);
+	}
+}
 /* USER CODE END 1 */

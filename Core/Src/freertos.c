@@ -25,7 +25,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "freertosUtils.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -170,6 +170,14 @@ void xUart2TransmitTask(void *argument)
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
+osMessageQueueId_t getUart1RecievedQueueHandle ()
+{
+	return xUart1RecievedQueueHandle;
+}
 
+osMessageQueueId_t getUart2RecievedQueueHandle ()
+{
+	return xUart2RecievedQueueHandle;
+}
 /* USER CODE END Application */
 
