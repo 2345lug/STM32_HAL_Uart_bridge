@@ -228,7 +228,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 
 	uartOperationStatus = HAL_UART_Receive_IT(huart, uart1RecievedBuffer, bytesReceived);
 
-	if (!uartOpeartionStatus)
+	if (!uartOperationStatus)
 	{
 		for (int i = 0; i < bytesReceived; i++)
 		{
@@ -242,5 +242,25 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 	}
 
 
+}
+
+/**
+  * @brief  getter for huart1 handler.
+  * @param  argument: Not used
+  * @retval uart1 handler pointer
+  */
+UART_HandleTypeDef* getHuart1Handler (void)
+{
+	return &huart1;
+}
+
+/**
+  * @brief  getter for huart2 handler.
+  * @param  argument: Not used
+  * @retval uart2 handler pointer
+  */
+UART_HandleTypeDef* getHuart2Handler (void)
+{
+	return &huart2;
 }
 /* USER CODE END 1 */
