@@ -19,9 +19,14 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "usart.h"
-
 /* USER CODE BEGIN 0 */
+#include "cmsis_os2.h"
+#include "freertosUtils.h"
 
+#define MAX_BUFFER_SIZE 1
+
+static uint8_t uart1RecievedBuffer[MAX_BUFFER_SIZE] = {0};
+static uint8_t uart2RecievedBuffer[MAX_BUFFER_SIZE] = {0};
 /* USER CODE END 0 */
 
 UART_HandleTypeDef huart1;
@@ -52,7 +57,7 @@ void MX_USART1_UART_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN USART1_Init 2 */
-
+  HAL_UART_Receive_IT(&huart1, uart1RecievedBuffer, MAX_BUFFER_SIZE); //1 cause we recieve only one byte by one time
   /* USER CODE END USART1_Init 2 */
 
 }
@@ -81,7 +86,7 @@ void MX_USART2_UART_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN USART2_Init 2 */
-
+  HAL_UART_Receive_IT(&huart2, uart2RecievedBuffer, 1); //1 cause we recieve only one byte by one time
   /* USER CODE END USART2_Init 2 */
 
 }
@@ -193,4 +198,70 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* uartHandle)
 
 /* USER CODE BEGIN 1 */
 
+/**
+ * @brief UART interrupt callback
+ *
+ * This function is intended solely for showcasing various RTOS synchronization
+ * mechanisms. I realize that so long interruption will be negative for perfomance.
+ * And using "for" into interrupt maybe terrible
+ *
+ * @param[in] huart Called uart pointer.
+ */
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+	uint8_t* bufferPointer;
+	osMessageQueueId_t queueHandler;
+	osStatus_t operationStatus = osOK;
+	HAL_StatusTypeDef uartOperationStatus = HAL_OK;
+
+	if (huart == &huart1)
+	{
+		bufferPointer = uart1RecievedBuffer;
+		queueHandler = getUart1RecievedQueueHandle();
+		HAL_UART_Receive_IT(huart, uart1RecievedBuffer, MAX_BUFFER_SIZE);
+	}
+	else if (huart == &huart2)
+	{
+		queueHandler = getUart2RecievedQueueHandle();
+		bufferPointer = uart2RecievedBuffer;
+		HAL_UART_Receive_IT(huart, uart2RecievedBuffer, MAX_BUFFER_SIZE);
+	}
+
+
+
+	if (!uartOperationStatus)
+	{
+		for (int i = 0; i < MAX_BUFFER_SIZE; i++)
+		{
+			operationStatus = osMessageQueuePut(queueHandler, (void*)(bufferPointer + i), 0, 0);
+		}
+	}
+
+	if (!operationStatus)
+	{
+		printf("Queue fail with code %d", operationStatus); //TODO: This code should be replaced by real Queue error process
+	}
+
+
+}
+
+/**
+  * @brief  getter for huart1 handler.
+  * @param  argument: Not used
+  * @retval uart1 handler pointer
+  */
+UART_HandleTypeDef* getHuart1Handler (void)
+{
+	return &huart1;
+}
+
+/**
+  * @brief  getter for huart2 handler.
+  * @param  argument: Not used
+  * @retval uart2 handler pointer
+  */
+UART_HandleTypeDef* getHuart2Handler (void)
+{
+	return &huart2;
+}
 /* USER CODE END 1 */

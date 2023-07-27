@@ -25,7 +25,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "freertosUtils.h"
+#include "usart.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -135,6 +136,7 @@ void MX_FREERTOS_Init(void) {
 /* USER CODE BEGIN Header_xUart1TransmitTask */
 /**
   * @brief  Function implementing the xUart1Transmit thread.
+  * wait byte from queue and send it to UART
   * @param  argument: Not used
   * @retval None
   */
@@ -143,9 +145,15 @@ void xUart1TransmitTask(void *argument)
 {
   /* USER CODE BEGIN xUart1TransmitTask */
   /* Infinite loop */
+  osStatus_t operationStatus = osOK;
+  uint8_t recievedByte = 0;
   for(;;)
   {
-    osDelay(1);
+	  operationStatus = osMessageQueueGet(xUart2RecievedQueueHandle, &recievedByte, NULL, osWaitForever);   // wait for message
+	  if (operationStatus == osOK)
+	  {
+		  HAL_UART_Transmit_IT (getHuart1Handler(), &recievedByte, 1); //Cause we read per byte
+	  }
   }
   /* USER CODE END xUart1TransmitTask */
 }
@@ -161,15 +169,39 @@ void xUart2TransmitTask(void *argument)
 {
   /* USER CODE BEGIN xUart2TransmitTask */
   /* Infinite loop */
+  osStatus_t operationStatus = osOK;
+  uint8_t recievedByte = 0;
   for(;;)
   {
-    osDelay(1);
+	  operationStatus = osMessageQueueGet(xUart1RecievedQueueHandle, &recievedByte, NULL, osWaitForever);   // wait for message
+	  if (operationStatus == osOK)
+	  {
+		  HAL_UART_Transmit_IT (getHuart2Handler(), &recievedByte, 1); //Cause we read per byte
+	  }
   }
   /* USER CODE END xUart2TransmitTask */
 }
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
+/**
+  * @brief  getter for huart1 queue handler.
+  * @param  argument: Not used
+  * @retval uart1Recieve queue handler
+  */
+osMessageQueueId_t getUart1RecievedQueueHandle()
+{
+	return xUart1RecievedQueueHandle;
+}
 
+/**
+  * @brief  getter for huart2 queue handler.
+  * @param  argument: Not used
+  * @retval uart2Recieve queue handler
+  */
+osMessageQueueId_t getUart2RecievedQueueHandle()
+{
+	return xUart2RecievedQueueHandle;
+}
 /* USER CODE END Application */
 
