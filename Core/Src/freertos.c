@@ -173,7 +173,7 @@ void xUart2TransmitTask(void *argument)
   uint8_t recievedByte = 0;
   for(;;)
   {
-	  operationStatus = osMessageQueueGet(xUart2RecievedQueueHandle, &recievedByte, NULL, osWaitForever);   // wait for message
+	  operationStatus = osMessageQueueGet(xUart1RecievedQueueHandle, &recievedByte, NULL, osWaitForever);   // wait for message
 	  if (operationStatus == osOK)
 	  {
 		  HAL_UART_Transmit_IT (getHuart2Handler(), &recievedByte, 1); //Cause we read per byte

@@ -23,7 +23,7 @@
 #include "cmsis_os2.h"
 #include "freertosUtils.h"
 
-#define MAX_BUFFER_SIZE 64
+#define MAX_BUFFER_SIZE 1
 
 static uint8_t uart1RecievedBuffer[MAX_BUFFER_SIZE] = {0};
 static uint8_t uart2RecievedBuffer[MAX_BUFFER_SIZE] = {0};
@@ -57,7 +57,7 @@ void MX_USART1_UART_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN USART1_Init 2 */
-
+  HAL_UART_Receive_IT(&huart1, uart1RecievedBuffer, MAX_BUFFER_SIZE); //1 cause we recieve only one byte by one time
   /* USER CODE END USART1_Init 2 */
 
 }
@@ -86,7 +86,7 @@ void MX_USART2_UART_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN USART2_Init 2 */
-
+  HAL_UART_Receive_IT(&huart2, uart2RecievedBuffer, 1); //1 cause we recieve only one byte by one time
   /* USER CODE END USART2_Init 2 */
 
 }
@@ -209,7 +209,6 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* uartHandle)
  */
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
-	uint16_t bytesReceived = huart->RxXferSize - huart->RxXferCount;
 	uint8_t* bufferPointer;
 	osMessageQueueId_t queueHandler;
 	osStatus_t operationStatus = osOK;
@@ -219,18 +218,20 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 	{
 		bufferPointer = uart1RecievedBuffer;
 		queueHandler = getUart1RecievedQueueHandle();
+		HAL_UART_Receive_IT(huart, uart1RecievedBuffer, MAX_BUFFER_SIZE);
 	}
 	else if (huart == &huart2)
 	{
 		queueHandler = getUart2RecievedQueueHandle();
 		bufferPointer = uart2RecievedBuffer;
+		HAL_UART_Receive_IT(huart, uart2RecievedBuffer, MAX_BUFFER_SIZE);
 	}
 
-	uartOperationStatus = HAL_UART_Receive_IT(huart, uart1RecievedBuffer, bytesReceived);
+
 
 	if (!uartOperationStatus)
 	{
-		for (int i = 0; i < bytesReceived; i++)
+		for (int i = 0; i < MAX_BUFFER_SIZE; i++)
 		{
 			operationStatus = osMessageQueuePut(queueHandler, (void*)(bufferPointer + i), 0, 0);
 		}
